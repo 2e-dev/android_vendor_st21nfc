@@ -24,8 +24,10 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.util.Log;
 import com.st.android.nfc_dta_extensions.INfcAdapterStDtaExtensions;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -175,11 +177,21 @@ public final class NfcAdapterStExtensions {
     /**
      * Constructor for the {@link NfcAdapterStExtensions}
      *
-     * @param adapter a {@link NfcAdapter}, must not be null
      * @return
      */
     public NfcAdapterStExtensions() {
         sInterface = getNfcAdapterStExtensionsInterface();
+    }
+
+    /**
+     * Constructor for the {@link NfcAdapterStExtensions}
+     *
+     * @param i interface retrieved separately by the calling app with
+     *     getNfcAdapterStExtensionsInterface
+     * @return
+     */
+    public NfcAdapterStExtensions(INfcAdapterStExtensions i) {
+        sInterface = i;
     }
 
     /** NFC service dead - attempt best effort recovery */
@@ -1176,15 +1188,53 @@ public final class NfcAdapterStExtensions {
      *
      * <p>
      *
-     * @param subSetId The identifier of the configuration sub-set.
-     * @param configId The identifier of the specific configuration parameter
+     * @param configSubSetId The identifier of the configuration sub-set.
+     * @param paramId The identifier of the specific configuration parameter
      * @param param The value of the specific configuration parameter
      */
-    public void sendPropSetConfig(int subSetId, int configId, byte[] param) {
-        Log.i(TAG, "sendPropSetConfig(" + subSetId + ")");
+    public void sendPropSetConfig(int configSubSetId, int paramId, byte[] param) {
+        Log.i(TAG, "sendPropSetConfig(" + configSubSetId + ")");
 
         try {
-            sInterface.sendPropSetConfig(subSetId, configId, param);
+            sInterface.sendPropSetConfig(configSubSetId, paramId, param);
+        } catch (RemoteException e) {
+            attemptDeadServiceRecovery(e);
+        }
+    }
+
+    /**
+     * This API sets several ST proprietary configurations in the NFCC.
+     *
+     * <p>
+     *
+     * <p>
+     *
+     * @param configSubSetIds Array of identifier of the configuration sub-set.
+     * @param paramIds Array of identifier of the specific configuration parameter
+     * @param params list of byte[] values of the specific configuration parameter
+     */
+    public void sendPropSetConfig(
+            List<Integer> configSubSetIds, List<Integer> paramIds, List<byte[]> params) {
+        Log.i(TAG, "sendPropSetConfig(" + configSubSetIds.size() + " values)");
+
+        try {
+            int[] subsets = new int[configSubSetIds.size()];
+            int[] ids = new int[paramIds.size()];
+            List<ByteArray> ba = new ArrayList<ByteArray>();
+
+            /* Convert */
+            for (int i = 0; i < configSubSetIds.size(); i++) {
+                subsets[i] = configSubSetIds.get(i);
+            }
+            for (int i = 0; i < paramIds.size(); i++) {
+                ids[i] = paramIds.get(i);
+            }
+            for (int i = 0; i < params.size(); i++) {
+                ba.add(new ByteArray(params.get(i)));
+            }
+
+            /* Send to service */
+            sInterface.sendPropSetConfigs(subsets, ids, ba);
         } catch (RemoteException e) {
             attemptDeadServiceRecovery(e);
         }
@@ -1197,15 +1247,15 @@ public final class NfcAdapterStExtensions {
      *
      * <p>
      *
-     * @param subSetId The identifier of the configuration sub-set.
-     * @param configId The identifier of the specific configuration parameter
+     * @param configSubSetId The identifier of the configuration sub-set.
+     * @param paramId The identifier of the specific configuration parameter
      * @param param The value of the specific configuration parameter
      */
-    public byte[] sendPropGetConfig(int subSetId, int configId) {
-        Log.i(TAG, "sendPropGetConfig(" + subSetId + ")");
+    public byte[] sendPropGetConfig(int configSubSetId, int paramId) {
+        Log.i(TAG, "sendPropGetConfig(" + configSubSetId + ")");
 
         try {
-            return sInterface.sendPropGetConfig(subSetId, configId);
+            return sInterface.sendPropGetConfig(configSubSetId, paramId);
         } catch (RemoteException e) {
             attemptDeadServiceRecovery(e);
         }
@@ -1374,5 +1424,14 @@ public final class NfcAdapterStExtensions {
             attemptDeadServiceRecovery(e);
         }
         return false;
+    }
+
+    public void seteSeReaderMode(boolean start) {
+        Log.i(TAG, "seteSeReaderMode(" + start + ")");
+        try {
+            sInterface.seteSeReaderMode(start);
+        } catch (RemoteException e) {
+            attemptDeadServiceRecovery(e);
+        }
     }
 }

@@ -18,11 +18,11 @@
 
 package com.st.android.nfc_extensions;
 
+import com.st.android.nfc_extensions.ByteArray;
 import com.st.android.nfc_dta_extensions.INfcAdapterStDtaExtensions;
 import com.st.android.nfc_extensions.INfcSettingsAdapter;
 import com.st.android.nfc_extensions.INfcWalletAdapter;
 import com.st.android.nfc_extensions.INfcChargingAdapter;
-
 
 /**
   * {@hide}
@@ -70,8 +70,8 @@ interface INfcAdapterStExtensions {
     void setNciConfig(int paramId, in byte[] param);
     byte[] getNciConfig(int paramId);
 
-    void sendPropSetConfig(int subSetId, int configId, in byte[] param);
-    byte[] sendPropGetConfig(int subSetId, int configId);
+    void sendPropSetConfig(int configSubSetId, int paramId, in byte[] param);
+    byte[] sendPropGetConfig(int configSubSetId, int paramId);
 
     byte[] sendPropTestCmd(int subCode, in byte[] paramTx);
 
@@ -83,9 +83,13 @@ interface INfcAdapterStExtensions {
     INfcAdapterStDtaExtensions getNfcAdapterStDtaExtensionsInterface();
 
     INfcSettingsAdapter getNfcSettingsAdapterInterface();
-    
+
     void programHceParameters(boolean setConfig, byte bitFrameSdd, byte platformConfig,
             byte selInfo, in byte[] nfcid1, byte rats, in byte[] histBytes);
 
     INfcChargingAdapter getNfcChargingAdapterInterface();
+
+    void seteSeReaderMode(boolean start);
+
+    void sendPropSetConfigs(in int[] configSubSetIds, in int[] paramIds, in List<ByteArray> params);
 }
